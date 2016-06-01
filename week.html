@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge, Chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="renderer" content="webkit">
+    <meta name="author" content="overkazaf">
+	<title>指定课程一周观看数详情</title>
+	<link rel="stylesheet" type="text/css" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+	<style type="text/css">
+		#main {
+			height: 620px;
+			line-height: 620px;
+			text-align: center;
+			font-size: 56px;
+			background: #e5e5e5;
+		}
+	</style>
+</head>
+<body>
+	<div class="col-md-10 col-md-offset-1">
+		<h1>指定课程一周观看数详情    <button class="btn btn-primary" id="switch">切换图表</button></h1>
+		<hr>
+	</div>
+	<div class="col-md-10 col-md-offset-1">
+		<div id="main">数据查询中，请耐心等耐...</div>
+	</div>
+	<script type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>
+	<script type="text/javascript" src="node_modules/echarts/dist/echarts.min.js"></script>
+	<script type="text/javascript" src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+	<script type="text/javascript">
+		$(function () {
+
+			var OptionGroup = {
+				"line" : function (data) {
+					var xData = [];
+					var legendData = [];
+					var seriesData = [];
+					var cnt = 0;
+
+					for (var key in data) {
+						if (cnt++ < 5) {
+							var list = data[key];
+							var tmpData = [];
+							var itemName = '';
+							for (var i = list.length - 1; i >= 0; i--) {
+								(function (i){
+									tmpData.push(list[i]['learner_count']);
+									if (!i) {
+										itemName = list[i]['course_name'];
+										legendData.push(list[i].course_name);
+									}
+
+									if (cnt == 1) xData.push(list[i].last_modified);
+								})(i);
+
+							}
+
+							seriesData.push({
+					            name:itemName,
+					            type:'line',
+					            stack: '总量',
+					            label: {
+					                normal: {
+					                    show: true,
+					                    position: 'top'
+					                }
+					            },
+					            areaStyle: {normal: {}},
+					            data:tmpData
+					        });
+						}
+					}
+					var option = {
+					    title: {
+					        text: APP.TITLE
+					    },
+					    tooltip : {
+					        trigger: 'axis'
+					    },
+					    legend: {
+					        data:legendData
+					    },
+					    toolbox: {
+					        feature: {
+					            saveAsImage: {}
+					        }
+					    },
+					    grid: {
+					        left: '3%',
+					        right: '4%',
+					        bottom: '3%',
+					        containLabel: true
+					    },
+					    xAxis : [
+					        {
+					            type : 'category',
+					            boundaryGap : false,
+					            data : xData
+					        }
+					    ],
+					    yAxis : [
+					        {
+					            type : 'value'
+					        }
+					    ],
+					    series : seriesData
+					};
+
+
+					return option;
+
+				},
+				"bar" : function (data) {
+					var xData = [];
+					var legendData = [];
+					var seriesData = [];
+					var cnt = 0;
+
+					for (var key in data) {
+						if (cnt++ < 5) {
+							var list = data[key];
+							var tmpData = [];
+							var itemName = '';
+							for (var i = list.length - 1; i >= 0; i--) {
+								(function (i){
+									tmpData.push(list[i]['learner_count']);
+									if (!i) {
+										itemName = list[i]['course_name'];
+										legendData.push(list[i].course_name);
+									}
+
+									if (cnt == 1) xData.push(list[i].last_modified);
+								})(i);
+
+							}
+
+							seriesData.push({
+					            name:itemName,
+					            type:'bar',
+					            data:tmpData,
+					            markLine : {
+					                lineStyle: {
+					                    normal: {
+					                        type: 'dashed'
+					                    }
+					                },
+					                data : [
+					                    [{type : 'min'}, {type : 'max'}]
+					                ]
+					            }
+					        });
+						}
+					}
+
+					var option = {
+					    title: {
+					        text: APP.TITLE
+					    },
+					    tooltip : {
+					        trigger: 'axis',
+					        axisPointer : {            // 坐标轴指示器，坐标轴触发有效
+					            type : 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+					        }
+					    },
+					    legend: {
+					        data:legendData
+					    },
+					    grid: {
+					        left: '3%',
+					        right: '4%',
+					        bottom: '3%',
+					        containLabel: true
+					    },
+					    xAxis : [
+					        {
+					            type : 'category',
+					            data : xData
+					        }
+					    ],
+					    yAxis : [
+					        {
+					            type : 'value'
+					        }
+					    ],
+					    series : seriesData
+					};
+
+					return option;
+				}
+			};
+			var APP = {
+				URL : 'http://localhost:8088/week.php',
+				TITLE : "图表标题",
+				SUB_TITLE : "图表副标题",
+				CANVAS_ID : "#main",
+				chartEl : null,
+				cache : {},
+				init : function () {
+					var that = this;
+					var status = true;
+
+
+					getData(APP.URL, function (data){
+						that.initChart();
+						that.renderChart(preproccessData(data));
+					});
+
+
+					$('#switch').on('click', function () {
+						status = !status;
+						var type = status ? 'line' : 'bar';
+
+						APP.renderChart(preproccessData(APP.cache), type);
+					});
+				},
+				initChart : function () {
+					APP.chartEl = echarts.init($(APP.CANVAS_ID)[0]);
+				},
+				getChartOption (data, type) {
+					var type = type || 'line';
+					return OptionGroup[type](data);
+				},
+				renderChart : function (data, type) {
+					var option = APP.getChartOption(data, type);
+					APP.chartEl.setOption(option);
+				}
+			};
+
+			function getData(url, callback) {
+				$.ajax({
+					url : url,
+					type : 'get',
+					dataType : 'JSON',
+					success : function (data) {
+						APP.cache = data;
+						callback && callback(data);
+					}
+				});
+			}
+
+			function preproccessData (data) {
+				var cache = {};
+				for (var i = 0, l = data.length; i < l; i++) {
+					var item = data[i];
+					if (!(item['level_2_id'] in cache)) {
+						cache[item['level_2_id']] = []
+					}
+
+					cache[item['level_2_id']].push(item);
+				}
+
+				for (var key in cache) {
+					if (cache[key].length < 5) {
+						delete cache[key];
+					}
+				}
+
+				for (var key in cache) {
+					var list = cache[key];
+					for (var i = 0, l = list.length; i < l; i++) {
+						var date = new Date(list[i]['last_modified']);
+						list[i]['last_modified'] = date.getFullYear() + '/' + (date.getMonth() + 1) + '/' + date.getDate(); 
+					}
+				}
+				return cache;
+			}
+
+
+			APP.init();
+		});
+	</script>
+</body>
+</html>

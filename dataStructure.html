@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge, Chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="renderer" content="webkit">
+    <meta name="author" content="overkazaf">
+	<title>与数据结构相关的五门课程</title>
+	<link rel="stylesheet" type="text/css" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+	<style type="text/css">
+		#main {
+			height: 620px;
+			background: #e5e5e5;
+		}
+	</style>
+</head>
+<body>
+	<div class="col-md-8 col-md-offset-2">
+		<h1>与数据结构相关的五门课程    <button class="btn btn-primary" id="switch">切换图表</button></h1>
+		<hr>
+	</div>
+	<div class="col-md-8 col-md-offset-2">
+		<div id="main"></div>
+	</div>
+	<script type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>
+	<script type="text/javascript" src="node_modules/echarts/dist/echarts.min.js"></script>
+	<script type="text/javascript" src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+	<script type="text/javascript">
+		$(function () {
+
+			var OptionGroup = {
+				"line" : function (data) {
+					var xData = [];
+					var seriesData = [];
+
+					for (var i = 0, l = data.length; i < l; i++) {
+						var item = data[i];
+						xData.push(item.course_name);
+						seriesData.push({
+							name : item.course_name,
+							value : item.learner_count
+						});
+					}
+
+					var option = {
+					    title: {
+					        text: APP.TITLE
+					    },
+					    tooltip : {
+					        trigger: 'axis'
+					    },
+					    legend: {
+					        data:xData
+					    },
+					    toolbox: {
+					        feature: {
+					            dataView: {readOnly: false},
+					            restore: {},
+					            saveAsImage: {}
+					        }
+					    },
+					    grid: {
+					        left: '3%',
+					        right: '4%',
+					        bottom: '3%',
+					        containLabel: true
+					    },
+					    xAxis : [
+					        {
+					            type : 'category',
+					            boundaryGap : false,
+					            data : xData
+					        }
+					    ],
+					    yAxis : [
+					        {
+					            type : 'value'
+					        }
+					    ],
+					    series : [
+					        {
+					            name:'观看数详情',
+					            type:'line',
+					            stack: '总量',
+					            areaStyle: {normal: {}},
+					            data:seriesData
+					        }
+					    ]
+					};
+
+					return option;
+
+				},
+				"bar" : function (data) {
+					var xData = [];
+					var seriesData = [];
+
+					for (var i = 0, l = data.length; i < l; i++) {
+						var item = data[i];
+						xData.push(item.course_name);
+						seriesData.push({
+							name : item.course_name,
+							value : item.learner_count
+						});
+					}
+
+					var option = {
+						title: {
+					        text: APP.TITLE
+					    },
+					    tooltip : {
+					        trigger: 'axis',
+					        axisPointer : {            // 坐标轴指示器，坐标轴触发有效
+					            type : 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+					        }
+					    },
+					    legend: {
+					        data:xData
+					    },
+					    grid: {
+					        left: '3%',
+					        right: '4%',
+					        bottom: '3%',
+					        containLabel: true
+					    },
+					    xAxis : [
+					        {
+					            type : 'category',
+					            data : xData
+					        }
+					    ],
+					    yAxis : [
+					        {
+					            type : 'value'
+					        }
+					    ],
+					    series : [
+					        {
+					            name:'观看数详情',
+					            type:'bar',
+					            data:seriesData
+					        }
+					    ]
+					};
+
+					return option;
+				}
+			};
+			var APP = {
+				URL : 'http://localhost:8088/dataStructure.php',
+				TITLE : "图表标题",
+				SUB_TITLE : "图表副标题",
+				CANVAS_ID : "#main",
+				chartEl : null,
+				cache : {},
+				init : function () {
+					var that = this;
+					var status = true;
+
+					this.initChart();
+
+					getData(APP.URL, function (data){
+						that.renderChart(data);
+					});
+
+
+					$('#switch').on('click', function () {
+						status = !status;
+						var type = status ? 'line' : 'bar';
+
+						APP.renderChart(APP.cache, type);
+					});
+				},
+				initChart : function () {
+					APP.chartEl = echarts.init($(APP.CANVAS_ID)[0]);
+				},
+				getChartOption (data, type) {
+					var type = type || 'line';
+					return OptionGroup[type](data);
+				},
+				renderChart : function (data, type) {
+					var option = APP.getChartOption(data, type);
+					APP.chartEl.setOption(option);
+				}
+			};
+
+			function getData(url, callback) {
+				$.ajax({
+					url : url,
+					type : 'get',
+					dataType : 'JSON',
+					success : function (data) {
+						APP.cache = data;
+						callback && callback(data);
+					}
+				});
+			}
+
+
+			APP.init();
+		});
+	</script>
+</body>
+</html>
