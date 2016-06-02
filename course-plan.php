@@ -17,17 +17,8 @@
   mysql_query("SET NAMES UTF8");
 
   $sql  = 'SELECT';
-  $sql .= ' level_2_id, course_name, learner_count, last_modified';
-  $sql .= ' FROM update_log main';
-  $sql .= ' WHERE (SELECT count(1) FROM update_log AS sub';
-  $sql .= ' WHERE sub.level_2_id = main.level_2_id';
-  $sql .= ' AND main.learner_count < sub.learner_count) < 7';
-  $sql .= ' AND DATE_SUB(CURDATE(), INTERVAL 7 DAY) <= DATE(last_modified)';
-  $sql .= ' AND level_2_id IN (7,37, 41, 8, 34)';
-  $sql .= ' ORDER BY level_2_id ASC,';
-  $sql .= ' learner_count DESC,';
-  $sql .= ' last_modified DESC';
-  $sql .= ' LIMIT 200';
+  $sql .= ' course_plan FROM plan';
+
 
   $ret = mysql_query($sql);
 
