@@ -29,7 +29,6 @@
   $sql .= ' last_modified DESC';
   $sql .= ' LIMIT 200';
 
-  echo $sql;
   $ret = mysql_query($sql);
 
   $retArray = array();
