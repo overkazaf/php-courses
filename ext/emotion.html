@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="renderer" content="webkit">
     <meta name="author" content="overkazaf">
-	<title>与数据结构相关的五门课程</title>
+	<title>课程评论的情感分布情况</title>
 	<link rel="stylesheet" type="text/css" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
 	<style type="text/css">
 		#main1,#main2 {
@@ -27,7 +27,7 @@
 </head>
 <body>
 	<div class="col-md-10 col-md-offset-1">
-		<h1 class="txt-center">课程信息图表详情展示</h1>
+		<h1 class="txt-center">课程评论的情感分布情况</h1>
 		<hr>
 	</div>
 	<div class="col-md-10 col-md-offset-1">
@@ -51,8 +51,7 @@
 
 			var APP = {
 				URL : 'http://localhost:8088/temp/emotion.php',
-				TITLE : "图表标题",
-				SUB_TITLE : "图表副标题",
+				TITLE : "评论情感状况汇总",
 				CANVAS_ID1 : "#main1",
 				CANVAS_ID2 : "#main2",
 				NAV_ID : "#navContainer",
@@ -76,10 +75,45 @@
 								}
 							});
 
-							// setTimeout(function () {
-							// 	// 出于性能考虑，延迟0.5秒绘制图表
-							// 	APP.renderChart(filtered);
-							// }, 500)
+							var preproccess = [];
+							var map = {};
+							filtered.forEach(function (item, index) {
+								if (!(item['cid'] in map)) {
+									map[item['cid']] = [];
+								}
+								map[item['cid']].push(item);
+							});
+
+							for (var cid in map) {
+								var list = map[cid];
+								var temp = {};
+								for (var x = 0, l = list.length; x < l; x++) {
+									var item = list[x];
+									temp['course_name'] = item['course_name'];
+									if (item['emotion'] == 1) {
+										if (!temp['emo1']) {
+											temp['emo1'] = 0;
+										}
+										temp['emo1'] += parseFloat(item['sum']);
+									} else if (item['emotion'] == 0) {
+										if (!temp['emo0']) {
+											temp['emo0'] = 0;
+										}
+										temp['emo0'] += parseFloat(item['sum']);
+									} else if (item['emotion'] == -1) {
+										if (!temp['emo-1']) {
+											temp['emo-1'] = 0;
+										}
+										temp['emo-1'] += parseFloat(item['sum']);
+									}
+								}
+								preproccess.push(temp);
+							}
+
+							setTimeout(function () {
+								// 出于性能考虑，延迟0.5秒绘制图表
+								APP.renderChart(preproccess);
+							}, 500)
 							
 						});
 
@@ -118,75 +152,95 @@
 						}
 					});
 				},
-				getChartOption : function (data) {
-					var xData = [];
+				getChartOption : function (data, title) {
+					var xData = ['积极情感', '中性情感', '消极情感'];
 					var seriesData = [];
 
 					for (var i = 0, l = data.length; i < l; i++) {
 						var item = data[i];
-						// x轴的变量值
-						xData.push(item.course_name);
-
 						// 对应的柱状图数据
-						seriesData.push(item.learner_count);
+						console.log('item', item);
+						seriesData.push({name:xData[0], value:item['emo1'] || 0});
+						seriesData.push({name:xData[1], value:item['emo0'] || 0});
+						seriesData.push({name:xData[2], value:-item['emo-1'] || 0});
 					}
+
 
 					// 最终生成的图表配置项
 					var option = {
-						title : {
-							text : data[0].level_1_name,
-							left : "center"
-						},
+					    title : {
+					        text: !!title? title:APP.TITLE,
+					        x:'center'
+					    },
 					    tooltip : {
-					        trigger: 'axis',
-					        axisPointer : {            // 坐标轴指示器，坐标轴触发有效
-					            type : 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
-					        }
+					        trigger: 'item',
+					        formatter: "{a} <br/>{b} : {c} ({d}%)"
 					    },
-					    toolbox: {
-					        feature: {
-					            dataView: {readOnly: false},
-					            restore: {},
-					            saveAsImage: {}
-					        }
+					    legend: {
+					        orient: 'vertical',
+					        left: 'left',
+					        top: 60,
+					        data: xData
 					    },
-					    grid: {
-					        left: '3%',
-					        right: '4%',
-					        bottom: '3%',
-					        containLabel: true
-					    },
-					    xAxis : [
-					        {
-					            type : 'category',
-					            axisLabel : {
-					            	inteval : 0
-					            },
-					            data : xData
-					        }
-					    ],
-					    yAxis : [
-					        {
-					            type : 'value'
-					        }
-					    ],
 					    series : [
 					        {
-					            name:data[0].level_1_name,
-					            type:'bar',
-					            data:seriesData
+					            name: '评论情况',
+					            type: 'pie',
+					            radius : '55%',
+					            center: ['50%', '60%'],
+					            data:seriesData,
+					            itemStyle: {
+					                emphasis: {
+					                    shadowBlur: 10,
+					                    shadowOffsetX: 0,
+					                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+					                }
+					            }
 					        }
 					    ]
 					};
 
+
 					return option;
 				},
 				renderChart : function (data) {
+
 					// 1. 生成图表配置项
-					var option = APP.getChartOption(data);
+					data = data.sort(function (a, b) {
+						var values1 = 0;
+						var values2 = 0;
+						values1 += a['emo0'] || 0;
+						values1 += a['emo1'] || 0;
+						values1 += -a['emo-1'] || 0;
+
+						values2 += b['emo0'] || 0;
+						values2 += b['emo1'] || 0;
+						values2 += -b['emo-1'] || 0;
+
+						return values2 - values1;
+					});
+
+					var maxData = data.slice(0, 1);
+
+					var sumData = [];
+					var result = {};
+					data.forEach(function (item) {
+						if (!result['emo0']) result['emo0'] = 0;
+						if (!result['emo-1']) result['emo-1'] = 0;
+						if (!result['emo1']) result['emo1'] = 0;
+						result['emo0'] += parseFloat(item['emo0'] || 0);
+						result['emo-1'] += parseFloat(item['emo-1'] || 0);
+						result['emo1'] += parseFloat(item['emo1'] || 0);
+					});
+
+					sumData.push(result);
+
+					var option1 = APP.getChartOption(sumData);
+					var option2 = APP.getChartOption(maxData, maxData[0].course_name);
 
 					// 2. 绘制echarts图表
-					APP.chartEl.setOption(option);
+					APP.chartEls[0].setOption(option1);
+					APP.chartEls[1].setOption(option2);
 				}
 			};
 			
