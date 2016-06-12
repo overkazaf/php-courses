@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge, Chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="renderer" content="webkit">
+    <meta name="author" content="overkazaf">
+	<title>课程评论的情感分布情况</title>
+	<link rel="stylesheet" type="text/css" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+	<style type="text/css">
+		#main1,#main2 {
+			height: 620px;
+			background: #e5e5e5;
+		}
+		.maxHeight {
+			max-height: 620px;
+			overflow-y: auto;
+			background: #e5e5e5;
+			border-radius: 5px;
+		}
+
+		#navContainer li:hover {
+			background: #ffff00 !important;
+		}
+	</style>
+</head>
+<body>
+	<div class="col-md-10 col-md-offset-1">
+		<h1 class="txt-center">课程评论的情感分布情况</h1>
+		<hr>
+	</div>
+	<div class="col-md-10 col-md-offset-1">
+		<div class="col-md-2 maxHeight">
+			<ul class="nav nav-stacked" id="navContainer">
+			  
+			</ul>
+		</div>
+		<div class="col-md-5">
+			<div id="main1"></div>
+		</div>
+		<div class="col-md-5">
+			<div id="main2"></div>
+		</div>
+	</div>
+	<script type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>
+	<script type="text/javascript" src="node_modules/echarts/dist/echarts.min.js"></script>
+	<script type="text/javascript" src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+	<script type="text/javascript">
+		$(function () {
+
+			var APP = {
+				URL : 'http://localhost:8088/temp/emotion.php',
+				TITLE : "评论情感状况汇总",
+				CANVAS_ID1 : "#main1",
+				CANVAS_ID2 : "#main2",
+				NAV_ID : "#navContainer",
+				chartEls : [],
+				cache : {},
+				init : function () {
+					this.initChart();
+					this.buildNavs(function () {
+
+						// 为每一个导航项绑定导航事件
+						$(APP.NAV_ID).on('click', 'li', function (){
+							// 点击左侧导航项后会重绘图表
+							var cache = APP.cache;
+							var filtered = [];
+
+							// 得到当前的课程level_2_id,并到缓存中查询，找到对应的数据
+							var currentId = $(this).attr('data-id');
+							cache.forEach(function (item, index) {
+								if (item['level_2_id'] == currentId) {
+									filtered.push(item);
+								}
+							});
+
+							var preproccess = [];
+							var map = {};
+							filtered.forEach(function (item, index) {
+								if (!(item['cid'] in map)) {
+									map[item['cid']] = [];
+								}
+								map[item['cid']].push(item);
+							});
+
+							for (var cid in map) {
+								var list = map[cid];
+								var temp = {};
+								for (var x = 0, l = list.length; x < l; x++) {
+									var item = list[x];
+									temp['course_name'] = item['course_name'];
+									if (item['emotion'] == 1) {
+										if (!temp['emo1']) {
+											temp['emo1'] = 0;
+										}
+										temp['emo1'] += parseFloat(item['sum']);
+									} else if (item['emotion'] == 0) {
+										if (!temp['emo0']) {
+											temp['emo0'] = 0;
+										}
+										temp['emo0'] += parseFloat(item['sum']);
+									} else if (item['emotion'] == -1) {
+										if (!temp['emo-1']) {
+											temp['emo-1'] = 0;
+										}
+										temp['emo-1'] += parseFloat(item['sum']);
+									}
+								}
+								preproccess.push(temp);
+							}
+
+							setTimeout(function () {
+								// 出于性能考虑，延迟0.5秒绘制图表
+								APP.renderChart(preproccess);
+							}, 500)
+							
+						});
+
+						// 初始化时，模拟每一个导航项的点击事件
+						$(APP.NAV_ID).find('li:first').trigger('click');
+					});
+				},
+				initChart : function () {
+					APP.chartEls.push(echarts.init($(APP.CANVAS_ID1)[0]));
+					APP.chartEls.push(echarts.init($(APP.CANVAS_ID2)[0]));
+				},
+				buildNavs : function (callback) {
+					$.ajax({
+						url : APP.URL,
+						type : 'get',
+						dataType : 'JSON',
+						success : function (json) {
+							APP.cache = filterNullData(json);
+							var navNames = pickLevel2Names(json);
+							var $nav = $(APP.NAV_ID);
+							var tpl = [];
+							for (var i = 0, l = navNames.length; i < l; i++) {
+								var newTpl = dropdownTpl();
+								newTpl = newTpl.replace('{{TEXT}}', navNames[i].nav);
+								newTpl = newTpl.replace('{{DATA}}', navNames[i].top);
+								newTpl = newTpl.replace('{{ID}}', navNames[i].id);
+								tpl.push(newTpl);
+							}
+
+							$nav.html(tpl.join(''));
+
+							callback && callback();
+						},
+						error : function (){
+							console.log(arguments);
+						}
+					});
+				},
+				getChartOption : function (data, title) {
+					var xData = ['积极情感', '中性情感', '消极情感'];
+					var seriesData = [];
+
+					for (var i = 0, l = data.length; i < l; i++) {
+						var item = data[i];
+						// 对应的柱状图数据
+						console.log('item', item);
+						seriesData.push({name:xData[0], value:item['emo1'] || 0});
+						seriesData.push({name:xData[1], value:item['emo0'] || 0});
+						seriesData.push({name:xData[2], value:-item['emo-1'] || 0});
+					}
+
+
+					// 最终生成的图表配置项
+					var option = {
+					    title : {
+					        text: !!title? title:APP.TITLE,
+					        x:'center'
+					    },
+					    tooltip : {
+					        trigger: 'item',
+					        formatter: "{a} <br/>{b} : {c} ({d}%)"
+					    },
+					    legend: {
+					        orient: 'vertical',
+					        left: 'left',
+					        top: 60,
+					        data: xData
+					    },
+					    series : [
+					        {
+					            name: '评论情况',
+					            type: 'pie',
+					            radius : '55%',
+					            center: ['50%', '60%'],
+					            data:seriesData,
+					            itemStyle: {
+					                emphasis: {
+					                    shadowBlur: 10,
+					                    shadowOffsetX: 0,
+					                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+					                }
+					            }
+					        }
+					    ]
+					};
+
+
+					return option;
+				},
+				renderChart : function (data) {
+
+					// 1. 生成图表配置项
+					data = data.sort(function (a, b) {
+						var values1 = 0;
+						var values2 = 0;
+						values1 += a['emo0'] || 0;
+						values1 += a['emo1'] || 0;
+						values1 += -a['emo-1'] || 0;
+
+						values2 += b['emo0'] || 0;
+						values2 += b['emo1'] || 0;
+						values2 += -b['emo-1'] || 0;
+
+						return values2 - values1;
+					});
+
+					var maxData = data.slice(0, 1);
+
+					var sumData = [];
+					var result = {};
+					data.forEach(function (item) {
+						if (!result['emo0']) result['emo0'] = 0;
+						if (!result['emo-1']) result['emo-1'] = 0;
+						if (!result['emo1']) result['emo1'] = 0;
+						result['emo0'] += parseFloat(item['emo0'] || 0);
+						result['emo-1'] += parseFloat(item['emo-1'] || 0);
+						result['emo1'] += parseFloat(item['emo1'] || 0);
+					});
+
+					sumData.push(result);
+
+					var option1 = APP.getChartOption(sumData);
+					var option2 = APP.getChartOption(maxData, maxData[0].course_name);
+
+					// 2. 绘制echarts图表
+					APP.chartEls[0].setOption(option1);
+					APP.chartEls[1].setOption(option2);
+				}
+			};
+			
+			function pickLevel2Names (json) {
+				var ret = [];
+				var cache = {};
+				for (var i=0, l = json.length; i < l ; i++) {
+					var item = json[i];
+					if (!!item['level_2_name'] && !(item['level_2_name'] in cache)) {
+						cache[item['level_2_name']] = true;
+						ret.push({
+							nav : item['level_2_name'],
+							id : item['level_2_id']
+						});
+					}
+				}
+
+				return ret;
+			}
+
+			function dropdownTpl () {
+				return '<li role="presentation" class="active" data-id="{{ID}}"><a href="javascript:void(0)">{{TEXT}}</a></li>';
+			}
+
+			function buildDropdown (data) {
+				var $nav = $(APP.NAV_ID);
+			}
+
+			function filterNullData (data) {
+				var result = [];
+				data.forEach(function (item) {
+					if (item['course_name'] && item['level_2_name'] && item['level_2_id'] != null) {
+						result.push(item);
+					}
+				});
+
+				return result;
+			}
+
+			APP.init();
+
+		});
+	</script>
+</body>
+</html>
