@@ -1,0 +1,59 @@
+<style type="text/css">
+	.container {
+		margin: 0 auto;
+		width: 380px;
+		border: 1px solid #ccc;
+		border-radius: 5px;
+		padding: 10px;
+	}
+
+	
+	.task-form dl dd {
+		display: inline-block;
+	}
+
+	.task-form dl dd.label{
+		width: 80px;
+		text-align: right;
+	}
+
+	.task-form dl dd.inp {
+		width: 200px;
+	}
+
+	.task-form dl dd input {
+		width: 90%;
+		padding: 5px;
+		border-radius: 5px;
+	}
+
+
+</style>
+
+	<div class="container">
+		<form class="task-form">
+			<dl>
+				<dd class="label">用户</dd>
+				<dd class="inp"><input type="text" name="username" placeholder="输入您的wifi用户名"></dd>
+			</dl>
+			<dl>
+				<dd class="label">密码</dd>
+				<dd class="inp"><input type="text" name="password" placeholder="输入您的wifi密码"></dd>
+			</dl>
+			<dl>
+				<dd class="label">刷新周期</dd>
+				<dd class="inp"><input type="number" name="period" placeholder="输入您的刷新周期(s)" value="600"></dd>
+			</dl>
+			<dl>
+				<dd>
+					<button class="btn btn-start btn-block">开始任务</button>
+				</dd>
+			</dl>
+			<dl>
+				<dd>
+					<button class="btn btn-reset btn-block">重置任务</button>
+				</dd>
+			</dl>
+		</form>
+
+	</div>
