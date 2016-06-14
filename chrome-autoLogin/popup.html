@@ -1,59 +1,147 @@
 <style type="text/css">
 	.container {
 		margin: 0 auto;
-		width: 380px;
-		border: 1px solid #ccc;
-		border-radius: 5px;
+		width: 340px;
+		border: 2px solid #ccc;
+		border-radius: 10px;
 		padding: 10px;
+		background-color: #eee;
+		font-family: "Merriweather, Georgia, serif";
+	}
+	.container b.tool {
+		font-weight: bold;
+		font-size: 24px;
+		cursor: pointer;
+		color: #ff4400;
+		margin-left: 10px;
+		margin-right: 10px;
+		text-shadow: 1px 1px 1px #222;
 	}
 
-	
-	.task-form dl dd {
+	.container b.tool,
+	.container input,
+	.container button {
+		transition: all ease-in-out 0.3s;
+		-webkit-transition: all ease-in-out 0.3s;
+		-moz-transition: all ease-in-out 0.3s;
+		-o-transition: all ease-in-out 0.3s;
+	}
+
+	.container b.tool:hover {
+		color: #ffff00;
+	}
+
+	.task-param dl {
+		border-bottom: 1px solic #aaa;
+	}
+
+	.task-param dl dd {
 		display: inline-block;
 	}
 
-	.task-form dl dd.label{
-		width: 80px;
+	.task-param dl dd.label{
+		width: 72px;
 		text-align: right;
 	}
 
-	.task-form dl dd.inp {
-		width: 200px;
+	.task-param dl dd.inp {
+		width: 160px;
 	}
 
-	.task-form dl dd input {
+	.task-param dl dd input {
 		width: 90%;
-		padding: 5px;
+		padding: 8px;
 		border-radius: 5px;
+		outline: none;
+		border: 1px solid #ccc;
+	}
+
+	.task-param dl dd input:hover {
+		border-color: #09f;
+		box-shadow: 0 0 5px #0af;
+	}
+
+	.task-param dl dd.line {
+		margin:0;
+		width: 100%;
+		box-sizing: border-box;
+		text-align: center;
+	}
+
+	#info {color: red; font-weight: bold; font-size: 14px;}
+
+	.btn {
+		border: none;
+		height: 32px;
+		cursor: pointer;
+		font-size: 16px;
+		border-radius: 5px;
+		padding: 5px;
+		outline: none;
+		color: #fff;
+	}
+
+	.btn:hover {
+		box-shadow: 0 0 4px #fff;
+	}
+
+	.btn-block {
+		width: 90%;
+	}
+
+	.btn-start {
+		background-color: #09f;
+	}
+
+	.btn-start:hover {
+		background-color: #01f;
+	}
+
+	.btn-reset {
+		background-color: #1a1a1a;
+		display: none;
+	}
+
+	.btn-reset:hover {
+		background-color: #555;
 	}
 
 
 </style>
-
 	<div class="container">
-		<form class="task-form">
+		<h4>NetEase Guest WIFI <b class="tool">AutoLogin</b> Toolkit</h4>
+		<hr>
+		<div class="task-param">
 			<dl>
-				<dd class="label">用户</dd>
-				<dd class="inp"><input type="text" name="username" placeholder="输入您的wifi用户名"></dd>
+				<dd class="label">用户名</dd>
+				<dd class="inp"><input id="username" type="text" name="username" placeholder="Guest WIFI username"></dd>
 			</dl>
 			<dl>
 				<dd class="label">密码</dd>
-				<dd class="inp"><input type="text" name="password" placeholder="输入您的wifi密码"></dd>
+				<dd class="inp"><input id="password" type="text" name="password" placeholder="Guest WIFI password"></dd>
 			</dl>
 			<dl>
-				<dd class="label">刷新周期</dd>
-				<dd class="inp"><input type="number" name="period" placeholder="输入您的刷新周期(s)" value="600"></dd>
+				<dd class="label">刷新周期(s)</dd>
+				<dd class="inp"><input id="period" type="number" name="period" placeholder="Refresh period (s)" value="600"></dd>
 			</dl>
+			
 			<dl>
-				<dd>
-					<button class="btn btn-start btn-block">开始任务</button>
+				<dd class="line">
+					<span id="info"></span>
+				</dd>
+			</dl>
+
+			<dl>
+				<dd class="line">
+					<button id="start" class="btn btn-start btn-block">开始任务</button>
 				</dd>
 			</dl>
 			<dl>
-				<dd>
+				<dd id="reset" class="line">
 					<button class="btn btn-reset btn-block">重置任务</button>
 				</dd>
 			</dl>
-		</form>
-
+		</div>
 	</div>
+<script type="text/javascript" src="jquery.min.js"></script>
+<script type="text/javascript" src="popup.js"></script>

@@ -1,10 +1,22 @@
 {  
   "name": "AutoLogin",  
   "version": "2.1",  
-  "manifest_version": 2,  
+  "manifest_version": 2,
+  "permissions": [
+	"tabs",
+	"http://*/*",
+	"https://*/*"
+	],
+  "content_scripts": [
+    {
+      "matches": ["http://*/*","https://*/*"],
+      "js": ["jquery.min.js"]
+    }
+  ],
   "description": "Refresh and login NetEase Guest WIFI automatically.",  
   "browser_action": {  
-    "default_title": "AutoLogin",
+    "default_title": "AutoLogin!",
+    "default_icon": "logo.jpg",
     "default_popup": "popup.html"
   }  
 } 
