@@ -33,7 +33,7 @@
 
 	  function excuteSchduler (u, p, v) {
 	  	var codes = [];
-			codes.push("var url = 'http://1.1.1.1/login.html';");
+			codes.push("var url = 'http://wireless-gateway.netease.com/fs/customwebauth/login.html?switch_url=http://wireless-gateway.netease.com/login.html&ap_mac=c0:62:6b:66:d8:00&client_mac=e0:ac:cb:81:1d:3c&wlan=NetEase_Guest';");
 			codes.push("var username = document.getElementsByName('username')[0];");
 			codes.push("var password = document.getElementsByName('password')[0];");
 			codes.push("var form = document.getElementsByTagName('form')[0];");
