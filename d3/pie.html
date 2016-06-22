@@ -5,9 +5,59 @@
 	<title>Document</title>
 </head>
 <body>
-	<div id="pie"></div>
+	<ul>
+		<li>1</li>
+		<li>2</li>
+		<li>3</li>
+		<li>4</li>
+	</ul>
+	<script type="text/javascript" src="d3.min.js"></script>
 	<script type="text/javascript">
+		var w = 300;
+		var h = 300;
+		var svg = d3.select('body')
+					.append('svg')
+					.attr('cx', 0)
+					.attr('cy', 0)
+					.attr('width', w)
+					.attr('height', h)
+					.attr('fill', 'red');
+
+		var aLi = d3.selectAll('li')
+					.datum('Hello')
+					.append('span')
+					.text(function (d, i){
+						return '  ' + d + '  ' + i;
+					});
+
+		var arr = [2,3,5,7];
+		var aaLi = d3.selectAll('li')
+					.data(arr)
+					.append('h2')
+					.html(function (d, i){
+						return '<b>' + d + '__' + i + '</b>';
+					});
+
+		// update, enter, exit
+		/**
+		 *  var update = svg.select(expression).data(arr);
+		 *  var enter = update.enter();
+		 *  var exit = update.exit();`
+		 * 
+		 *  1. update
+		 *   update.text(function (d, i){return d;});
+		 *
+		 *  2. enter
+		 *   enter.append('p').text(function(d, i){ return d;});
+		 *
+		 *  3. exit
+		 *   exit.remove();
+		 */
 		
+
+		var dataset = [2,3,4,123,12,232,3123,43,43,34,-234,-43,234,-34];
+		var result = d3.extent(dataset);
+		console.log(result);
 	</script>
 </body>
-</html>
+</html
