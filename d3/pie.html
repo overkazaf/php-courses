@@ -3,6 +3,9 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Document</title>
+	<style type="text/css">
+		
+	</style>
 </head>
 <body>
 	<ul>
@@ -57,7 +60,63 @@
 
 		var dataset = [2,3,4,123,12,232,3123,43,43,34,-234,-43,234,-34];
 		var result = d3.extent(dataset);
-		console.log(result);
+
+		var a = [1,2,3];
+		var b = ['apple', 'boy', 'cat'];
+		var c = [{'name':'John'}, {'name':'Kevin'}, {'name':'Alex'}];
+
+		var zip = d3.zip(a,b,c);
+
+		console.log('zip', zip);
+
+
+		var bW = 400;
+		var bH = 400;
+
+		var padding = {top:20, bottom:20, left: 20, right: 20};
+		var rectWidth = 30;
+		var rectStep = 40;
+		var dataset1 = [23,43,21,25,96,54,34];
+
+		var svg = d3.select('body')
+					.append('svg')
+					.attr('width', bW)
+					.attr('height', bH);
+		
+		var rect = svg.selectAll('rect')
+					.data(dataset1)
+					.enter()
+					.append('rect')
+					.attr('x', function (d, i) {
+						return padding.left + i*rectStep;
+					})
+					.attr('y', function (d, i){
+						return bH - padding.bottom -d;
+					})
+					.attr('width', rectWidth)
+					.attr('height', function (d){
+						return d;
+					}).
+					attr('fill', 'steelblue');
+
+		var text = svg.selectAll('text')
+					.data(dataset1)
+					.enter()
+					.append('text')
+					.attr('x', function (d, i){
+						return padding.left + i*rectStep;
+					})
+					.attr('y', function (d, i){
+						return bH - padding.bottom - d;
+					})
+					.attr('dx', rectWidth/2)
+					.attr('dy', '1em')
+					.attr('font-size', '12px')
+					.attr('fill', 'white')
+					.attr('text-anchor', 'middle')
+					.text(function (d){
+						return d;
+					});
 	</script>
 </body>
 </html
