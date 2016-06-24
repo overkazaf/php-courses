@@ -4,7 +4,9 @@
 	<meta charset="UTF-8">
 	<title>Document</title>
 	<style type="text/css">
-		
+		.fill {
+			background: #0099ff;
+		}
 	</style>
 </head>
 <body>
@@ -76,7 +78,7 @@
 		var padding = {top:20, bottom:20, left: 20, right: 20};
 		var rectWidth = 30;
 		var rectStep = 40;
-		var dataset1 = [23,43,21,25,96,54,34];
+		var dataset1 = [123,243,221,215,96,54,314];
 
 		var svg = d3.select('body')
 					.append('svg')
@@ -94,6 +96,10 @@
 						return bH - padding.bottom -d;
 					})
 					.attr('width', rectWidth)
+					.attr('height', 0)
+					.transition()
+					.delay(500)
+					.duration(2000)
 					.attr('height', function (d){
 						return d;
 					}).
@@ -112,11 +118,72 @@
 					.attr('dx', rectWidth/2)
 					.attr('dy', '1em')
 					.attr('font-size', '12px')
-					.attr('fill', 'white')
+					.attr('fill', '#000')
 					.attr('text-anchor', 'middle')
 					.text(function (d){
 						return d;
 					});
+
+		d3.selectAll('rect').on('click', function (){
+			d3.select(this)
+				.transition()
+				.duration(1000)
+				.attr('fill', 'red')
+		});
+
+		var circles = [
+			{cx: 130, cy:240, r:49},
+			{cx: 340, cy:100, r:40}
+		];
+
+		var drag = d3.drag()
+			.subject(function (d) {
+				return d == null ? {x: event.x, y: event.y} : d;
+			})
+			.on('start', function (d){
+				console.log('drag start');
+			})
+			.on('end', function (d){
+				console.log('drag end');
+			})
+			.on('drag', function (d){
+				d3.select(this)
+				  .attr('cx', d.cx = d3.event.x)
+				  .attr('cy', d.cy = d3.event.y);
+			});
+
+		
+
+
+
+		var SVG = d3.select('body')
+					.append('svg')
+					.attr('x', 100)
+					.attr('y', 100)
+					.attr('width', 500)
+					.attr('height', 500)
+					.classed('fill', true)
+					.transition()
+					.duration(750)
+					.attr('width', 1500)
+					.attr('height', 1500);
+
+		// var c = SVG.selectAll('circle')
+		// 			.data(circles)
+		// 			.enter()
+		// 			.append('circle')
+		// 			.attr('cx', function (d, i){
+		// 				return d.cx;
+		// 			})
+		// 			.attr('cy', function (d, i){
+		// 				return d.cy;
+		// 			})
+		// 			.attr('r', function (d){
+		// 				return d.r;
+		// 			})
+		// 			.attr('fill', 'steelblue')
+		// 			.call(drag);
+		
 	</script>
 </body>
 </html
