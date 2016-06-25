@@ -168,21 +168,21 @@
 					.attr('width', 1500)
 					.attr('height', 1500);
 
-		// var c = SVG.selectAll('circle')
-		// 			.data(circles)
-		// 			.enter()
-		// 			.append('circle')
-		// 			.attr('cx', function (d, i){
-		// 				return d.cx;
-		// 			})
-		// 			.attr('cy', function (d, i){
-		// 				return d.cy;
-		// 			})
-		// 			.attr('r', function (d){
-		// 				return d.r;
-		// 			})
-		// 			.attr('fill', 'steelblue')
-		// 			.call(drag);
+		var c = SVG.selectAll('circle')
+					.data(circles)
+					.enter()
+					.append('circle')
+					.attr('cx', function (d, i){
+						return d.cx;
+					})
+					.attr('cy', function (d, i){
+						return d.cy;
+					})
+					.attr('r', function (d){
+						return d.r;
+					})
+					.attr('fill', 'steelblue')
+					.call(drag);
 		
 	</script>
 </body>
