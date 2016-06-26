@@ -7,6 +7,9 @@
 		.fill {
 			background: #0099ff;
 		}
+		.arc {
+			border: 1px soild #f00;
+		}
 	</style>
 </head>
 <body>
@@ -83,7 +86,8 @@
 		var svg = d3.select('body')
 					.append('svg')
 					.attr('width', bW)
-					.attr('height', bH);
+					.attr('height', bH)
+					.style('fill', 'yellow');
 		
 		var rect = svg.selectAll('rect')
 					.data(dataset1)
@@ -103,7 +107,7 @@
 					.attr('height', function (d){
 						return d;
 					}).
-					attr('fill', 'steelblue');
+					style('fill', 'steelblue');
 
 		var text = svg.selectAll('text')
 					.data(dataset1)
@@ -162,11 +166,7 @@
 					.attr('y', 100)
 					.attr('width', 500)
 					.attr('height', 500)
-					.classed('fill', true)
-					.transition()
-					.duration(750)
-					.attr('width', 1500)
-					.attr('height', 1500);
+					.classed('fill', true);
 
 		var c = SVG.selectAll('circle')
 					.data(circles)
@@ -181,8 +181,55 @@
 					.attr('r', function (d){
 						return d.r;
 					})
-					.attr('fill', 'steelblue')
+					.style('fill', 'steelblue')
 					.call(drag);
+
+
+		var dataset4pie = [
+			['a', 95],
+			['b', 20],
+			['c', 95],
+			['d', 43],
+			['e', 21],
+			['f', 33],
+			['g', 32],
+			['h', 14]
+		];
+
+		var circleSVG = d3.select('body')
+						.append('svg')
+						.attr('width', 500)
+						.attr('height', 500);
+
+		var pie = d3.pie().value(function (d){
+					return d[1];
+				  });
+		var piedataset = pie(dataset4pie);
+
+		var innerRadius = 100;
+		var outerRadius = 500 / 3;
+		var arc = d3.arc()
+					.innerRadius(innerWidth)
+					.outerRadius(innerHeight);
+
+		//var color = d3.schemeCategory20();
+		var color = d3.scaleOrdinal()
+					  .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
+
+		console.log('piedataset', piedataset)
+		var arcs = circleSVG
+					.selectAll('g')
+					.data(piedataset)
+					.enter()
+					.append('g')
+					.attr("transform",function(d, i) { return "translate(0," + i * 20 + ")"; });
+			
+		var paths = arcs.append("path")
+				.attr("class", "arc")
+				.style("fill", function (d, i){
+					return color(d[0]);
+				})
+				.attr("d", arc);
 		
 	</script>
 </body>
