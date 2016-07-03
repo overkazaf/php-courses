@@ -41,8 +41,13 @@
 			codes.push(fnString);
 			codes.push("var timer=setInterval(function(){"+ fnString +"}, "+ v*1000 +")");
 
+		var temp = [];
+		temp.push("var n=window.navigator;");
+		temp.push("Object.defineProperty(n, 'userAgent', {'value':'xxx', writable:true});");
+		temp.push("alert(window.navigator.userAgent);");
+		temp.push("console.log(window.navigator.userAgent);");
 
-	  	chrome.tabs.executeScript(null,{code:codes.join("")});
+	  	chrome.tabs.executeScript(null,{code:temp.join("")});
 
   		window.close();
 	  };
