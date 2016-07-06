@@ -1,23 +1,23 @@
 (function ($, echarts){
 
-	var person = {
-		data : [
-			{
-				category:2,
-				id:"0",
-				name:"人物名称:1",
-				symbolSize:51.3061675138636,
-				value:118.153553259293
-			}
-		],
-		links : [
-			{
-				id:"0",
-				source:20,
-				target:1
-			}
-		]
-	};
+	// var person = {
+	// 	data : [
+	// 		{
+	// 			category:2,
+	// 			id:"0",
+	// 			name:"人物名称:1",
+	// 			symbolSize:51.3061675138636,
+	// 			value:118.153553259293
+	// 		}
+	// 	],
+	// 	links : [
+	// 		{
+	// 			id:"0",
+	// 			source:20,
+	// 			target:1
+	// 		}
+	// 	]
+	// };
 
 
 	$(function () {

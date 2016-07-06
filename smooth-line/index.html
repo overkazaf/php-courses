@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+		#main {
+			margin: 0 auto;
+			width: 900px;
+			height: 500px;
+		}
+	</style>
+</head>
+<body>
+	<div id="main"></div>
+	<script type="text/javascript" src="assets/jquery/dist/jquery.min.js"></script>
+	<script type="text/javascript" src="assets/echarts/dist/echarts.min.js"></script>
+	<script type="text/javascript">
+		$(function () {
+			var APP = {
+				CANVAS_ID : '#main',
+				chartEl : null, // echarts实例的引用
+				init : function () {
+					// 初始化图表
+					this.initChart();
+
+					// 渲染图表
+					this.renderChart();
+				},
+				initChart: function () {
+					this.chartEl = echarts.init($(APP.CANVAS_ID)[0]);
+				},
+				getChartOption : function () {
+
+					var xAxis = [] || ['周一','周二','周三','周四','周五','周六','周日']; // x轴文本
+					var legendData = ['Demo']; // 数据名称
+					var seriesData = [0, 132, 400, 950, 600, 230, 0]; // 标记点的数据
+
+					var option = {
+					    title: {
+					        text: '堆叠区域图'
+					    },
+					    tooltip : {
+					        trigger: 'axis'
+					    },
+					    legend: {
+					        data: legendData
+					    },
+					    toolbox: {
+					        feature: {
+					            saveAsImage: {}
+					        }
+					    },
+					    grid: {
+					        left: '3%',
+					        right: '4%',
+					        bottom: '3%',
+					        containLabel: true
+					    },
+					    xAxis : [
+					        {
+					            type : 'category',
+					            boundaryGap : false,
+					            data : xAxis
+					        }
+					    ],
+					    yAxis : [
+					        {
+					            type : 'value'
+					        }
+					    ],
+					    series : [
+					        {
+					            name:legendData[0],
+					            type:'line',
+					            showSymbol : false, // 不显示标记点
+					            smooth : true, // 平滑过度
+					            areaStyle: {normal: {}},
+					            data: seriesData
+					        }
+					    ]
+					};
+
+					return option;
+				},
+				renderChart : function () {
+					var option = this.getChartOption();
+					this.chartEl.setOption(option);
+				}
+			};
+
+
+
+			APP.init();
+		});
+	</script>
+</body>
+</html>
