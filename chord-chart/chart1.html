@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
+<title>chart1</title>
 <style>
 
 body {
-  font: 10px sans-serif;
+  font: 12px sans-serif;
 }
 
 .group-tick line {
@@ -14,91 +15,215 @@ body {
   fill-opacity: 0.67;
 }
 
+#main {
+  margin: 40px auto;
+  width: 600px;
+  height: 600px;
+}
+
 </style>
-<svg width="600" height="600"></svg>
+<div id="main">
+  <svg width="700" height="700"></svg>
+</div>
 <script src="d3.v4.0.0-alpha.50.min.js"></script>
 <script src="d3-chord.v.0.0.min.js"></script>
+<script src="jquery/dist/jquery.min.js"></script>
 <script>
+getMatrix({
+  port : 8080,
+  filename : 'json/total.json',
+  callback : function (matrix){
+    var json = sortByKeyPriority(matrix);
+    var matrix = json2Matrix(json);
+    renderChart(matrix);
+  }
+});
+
+
+function sortByKeyPriority (json) {
+  var pri = [
+    '中国',
+    '日本',
+    '韩国',
+    '新加坡'
+  ];
+
+  var ret = {};
+  for (var i = 0, l = pri.length; i < l; i++) {
+    ret[pri[i]] = clone(json[pri[i]]);
+  }
+
+  for (var city in json) {
+    if (indexOf(city, pri) === -1) {
+      ret[city] = clone(json[city]);
+    }
+  }
+  return ret;
+}
+
+function clone (obj) {
+  if (typeof obj !== 'object') return obj;
+  var ret = new obj.constructor();
+
+  for (var key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      ret[key] = clone(obj[key]);
+    }
+  } 
+  return ret;
+}
+
+function indexOf(el, array) {
+  for (var i = 0, l = array.length; i < l; i++) {
+    if (el == array[i]) {
+      return i;
+    }
+  }
+
+  return -1;
+}
 
 // From http://mkweb.bcgsc.ca/circos/guide/tables/
-var matrix = [
-  [11975,  5871, 8916, 2868],
-  [ 1951, 10048, 2060, 6171],
-  [ 8010, 16145, 8090, 8045],
-  [ 1013,   990,  940, 6907]
-];
-
-var svg = d3.select("svg"),
-    width = +svg.attr("width"),
-    height = +svg.attr("height"),
-    outerRadius = Math.min(width, height) * 0.5 - 40,
-    innerRadius = outerRadius - 30;
-
-var formatValue = d3.formatPrefix(",.0", 1e3);
-
-var chord = d3.chord()
-    .padAngle(0.05)
-    .sortSubgroups(d3.descending);
-
-var arc = d3.arc()
-    .innerRadius(innerRadius)
-    .outerRadius(outerRadius);
-
-var ribbon = d3.ribbon()
-    .radius(innerRadius);
-
-var color = d3.scaleOrdinal()
-    .domain(d3.range(4))
-    .range(["#0099ff", "#ccee99", "#ffee00", "#ee0099"]);
-
-var g = svg.append("g")
-    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
-    .datum(chord(matrix));
-
-var group = g.append("g")
-    .attr("class", "groups")
-  .selectAll("g")
-    .data(function(chords) { return chords.groups; })
-  .enter().append("g");
-
-group.append("path")
-    .style("fill", function(d) { return color(d.index); })
-    .style("stroke", function(d) { return d3.rgb(color(d.index)).darker(); })
-    .attr("d", arc);
-
-var groupTick = group.selectAll(".group-tick")
-    .data(function(d) { return groupTicks(d, 1e3); })
-  .enter().append("g")
-    .attr("class", "group-tick")
-    .attr("transform", function(d) { return "rotate(" + (d.angle * 180 / Math.PI - 90) + ") translate(" + outerRadius + ",0)"; });
-
-groupTick.append("line")
-    .attr("x2", 6);
-
-groupTick
-  .filter(function(d) { return d.value % 5e3 === 0; })
-  .append("text")
-    .attr("x", 8)
-    .attr("dy", ".35em")
-    .attr("transform", function(d) { return d.angle > Math.PI ? "rotate(180) translate(-16)" : null; })
-    .style("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
-    .text(function(d) { return formatValue(d.value); });
-
-g.append("g")
-    .attr("class", "ribbons")
-  .selectAll("path")
-    .data(function(chords) { return chords; })
-  .enter().append("path")
-    .attr("d", ribbon)
-    .style("fill", function(d) { return color(d.target.index); })
-    .style("stroke", function(d) { return d3.rgb(color(d.target.index)).darker(); });
-
-// Returns an array of tick angles and values for a given group and step.
-function groupTicks(d, step) {
-  var k = (d.endAngle - d.startAngle) / d.value;
-  return d3.range(0, d.value, step).map(function(value) {
-    return {value: value, angle: value * k + d.startAngle};
+var countryNames = [];
+function getMatrix (option) {
+  $.ajax({
+    url : 'http://localhost:' + option.port + '/' + option.filename,
+    type : 'GET',
+    dataType : 'JSON',
+    success : function (json) {
+      option.callback && option.callback(json);
+    }
   });
+}
+
+function json2Matrix (json) {
+  var retArray = [];
+  var cnt = 0;
+  for (var city in json) {
+    var cur = json[city];
+    var curArray = [];
+    
+    // 填写国家名称
+    countryNames[cnt++] = city;
+    for (var key in cur) {
+      var val = cur[key];
+      curArray.push(parseFloat(val));
+    }
+    retArray.push(curArray);
+  }
+
+  return retArray;
+}
+
+function getTransform (d) {
+  var rotAngle = d.angle + 90;
+  var transX = d.angle;
+  var transY = -40;
+  return "rotate("+ (rotAngle) +") translate("+ transX+","+ transY +")";
+}
+
+
+function renderChart (matrix) {
+  var svg = d3.select("svg"),
+      width = +svg.attr("width"),
+      height = +svg.attr("height"),
+      outerRadius = Math.min(width, height) * 0.4 - 40,
+      innerRadius = outerRadius - 20;
+
+  var formatValue = d3.formatPrefix(",.0", 1e-2);
+
+  var chord = d3.chord()
+      .padAngle(0.05)
+      .sortSubgroups(d3.descending);
+
+  var arc = d3.arc()
+      .innerRadius(innerRadius)
+      .outerRadius(outerRadius);
+
+  var ribbon = d3.ribbon()
+      .radius(innerRadius);
+
+  var color = d3.scaleOrdinal()
+      .domain(d3.range(14))
+      .range(["#eecccc", 
+              "#dddddd", 
+              "#eeeeff", 
+              "#aaccff", 
+              "#4400ee", 
+              "#cc99ae", 
+              "#f08922", 
+              "#99cc11",
+              "#ffee30", 
+              "#ee0669", 
+              "#0993ff", 
+              "#ccee99", 
+              "#ffee00", 
+              "#ee0099"]);
+
+  var g = svg.append("g")
+      .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
+      .datum(chord(matrix));
+
+  var group = g.append("g")
+      .attr("class", "groups")
+    .selectAll("g")
+      .data(function(chords) { return chords.groups; })
+    .enter().append("g");
+
+  group.append("path")
+      .style("fill", function(d) { return color(d.index); })
+      .style("stroke", function(d) { return d3.rgb(color(d.index)).darker(); })
+      .attr("d", arc);
+
+  var groupTick = group.selectAll(".group-tick")
+      .data(function(d) { return groupTicks(d, 1e2); })
+    .enter().append("g")
+      .attr("class", "group-tick")
+      .attr("transform", function(d) { return "rotate(" + (d.angle * 180 / Math.PI - 90) + ") translate(" + outerRadius + ",0)"; });
+
+  groupTick.append("line")
+      .attr("x2", 6);
+
+  groupTick
+    .append("text")
+      .attr("x", 8)
+      .attr("dy", ".35em")
+      .attr("transform", function(d) { return d.angle > Math.PI ? "rotate(180) translate(-16)" : null; })
+      .style("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
+      .text(function(d) { return d.value; });
+
+
+  var c = 0;
+  var groupName = groupTick
+      .filter(function (d, i, arr){
+        return i == Math.floor(arr.length / 2);
+      })
+      .append("text")
+      .attr("transform", function(d) { return getTransform(d); })
+      .style("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
+      .style("font-size", "1rem")
+      .text(function (d, i){
+        // 生成国家名字
+        return countryNames[c++];
+      });
+
+
+  g.append("g")
+      .attr("class", "ribbons")
+    .selectAll("path")
+      .data(function(chords) { return chords; })
+    .enter().append("path")
+      .attr("d", ribbon)
+      .style("fill", function(d) { return color(d.target.index); })
+      .style("stroke", function(d) { return d3.rgb(color(d.target.index)).darker(); });
+
+  // Returns an array of tick angles and values for a given group and step.
+  function groupTicks(d, step) {
+    var k = (d.endAngle - d.startAngle) / d.value;
+    return d3.range(0, d.value, step).map(function(value) {
+      return {value: value, angle: value * k + d.startAngle};
+    });
+  }
 }
 
 </script>
