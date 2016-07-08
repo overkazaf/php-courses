@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<title>fund</title>
+<title>trade</title>
 <style>
 
 body {
@@ -44,7 +44,7 @@ path:hover{
 <script>
 getMatrix({
   port : 8080,
-  filename : 'json/fund.json',
+  filename : 'json/trade.json',
   callback : function (matrix){
     var json = sortByKeyPriority(matrix);
     var matrix = json2Matrix(json);
