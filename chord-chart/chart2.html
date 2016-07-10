@@ -17,16 +17,18 @@ body {
 
 path {
   cursor: pointer;
-  opacity: 0.5;
+  opacity: 0.2;
   transition: all 0.3s ease-in-out;
   -webkit-transition: all 0.3s ease-in-out;
   -moz-transition: all 0.3s ease-in-out;
   -o-transition: all 0.3s ease-in-out;
 }
 
-path:hover{
+path:hover,
+path.active{
   opacity: 1;
 }
+
 
 #main {
   margin: 10px auto;
@@ -34,19 +36,52 @@ path:hover{
   height: 700px;
 }
 
+
+.tooltip {
+  position: absolute;
+  width: 240px;
+  height: 480px;
+  padding: 20px;
+  opacity: 0.7;
+  background: #666;
+  color: #fff;
+  border-radius: 5px;
+  border: 10px solid #ccc;
+  display: none;
+  overflow-y: auto;
+
+  transition: all .3s ease-in-out;
+  -webkit-transition: all .3s ease-in-out;
+  -moz-transition: all .3s ease-in-out;
+  -ms-transition: all .3s ease-in-out;
+  -o-transition: all .3s ease-in-out;
+}
+
+.tooltip ul {
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+}
+
+
+
 </style>
 <div id="main">
   <svg width="700" height="700"></svg>
 </div>
+<div id="tooltip" class="tooltip"></div>
 <script src="d3.v4.0.0-alpha.50.min.js"></script>
 <script src="d3-chord.v.0.0.min.js"></script>
 <script src="jquery/dist/jquery.min.js"></script>
 <script>
+
+var fileJson;
 getMatrix({
   port : 8080,
-  filename : 'json/oversea.json',
+  filename : 'json/fund.json',
   callback : function (matrix){
     var json = sortByKeyPriority(matrix);
+    fileJson = json;
     var matrix = json2Matrix(json);
     renderChart(matrix);
   }
@@ -202,13 +237,98 @@ function renderChart (matrix) {
       .data(function(chords) { return chords.groups; })
     .enter().append("g");
 
+
+  function buildInfo (index) {
+    var tpl = [];
+    var cnt = 0;
+    var key;
+    for (var attr in fileJson) {
+      if (cnt == index) {
+        key = attr;
+        break;
+      } else {
+        cnt++;
+      }
+    }
+
+    var target = fileJson[key];
+    if (!!target) {
+      tpl.push('<h2>'+ key +'</h2>');
+      tpl.push('<ul>');
+      for (var sub in target) {
+        if (target[sub] != 0) {
+          tpl.push('<li>'+ key + ' -> ' + sub + " : " + new Number(target[sub]).toFixed(2) +'</li>');
+        }
+      }
+      tpl.push('</ul>');
+    }
+
+    return tpl.join('<br />');
+  }
+
+
+  function getCacheInfo () {
+    var cache = {};
+    return function (index) {
+      return cache[index] || (cache[index] = buildInfo(index))
+    };
+  }
+
+  var getInfo = getCacheInfo();
+
+  var tooltip = document.getElementById('tooltip');
+  var Tooltip = {
+    'hide' : function () {
+      tooltip.style.display = 'none';
+    },
+    'show' : function (opt) {
+      var tpl = getInfo(opt.idx);
+      var left =  opt.x + 10 + 'px';
+      var top =  opt.y + 10 + 'px';
+
+      tooltip.style.display = 'block';
+      tooltip.innerHTML = tpl;
+      tooltip.style.left = left;
+      tooltip.style.top = top;
+    },
+    'move' : function (opt) {
+      
+      setTimeout(function (){
+        var left =  opt.x + 10 + 'px';
+        var top =  opt.y + 10 + 'px';
+
+        
+        tooltip.style.left = left;
+        tooltip.style.top = top;
+      }, 20);
+    }
+  };
+
+
   group.append("path")
       .style("fill", function(d) { return color(d.index); })
       .style("stroke", function(d) { return d3.rgb(color(d.index)).darker(); })
       .attr("d", arc)
       .attr("data-index", function (d){
         return d.index;
+      }).on('mouseover', function (){
+        var $this = d3.select(this);
+        var thisIndex = $this.attr('data-index');
+        var ribbons = d3.select('.ribbons');
+        var paths = ribbons.selectAll('path').filter(function (d){
+          return (d.source.index == thisIndex || d.target.index == thisIndex);
+        });
+        paths.attr('class', 'active');
+      }).on('mouseout', function (){
+        var $this = d3.select(this);
+        var thisIndex = $this.attr('data-index');
+        var ribbons = d3.select('.ribbons');
+        var paths = ribbons.selectAll('path').filter(function (d){
+          return (d.source.index == thisIndex || d.target.index == thisIndex);
+        });
+        paths.attr('class', '');
       });
+
 
   var groupTick = group.selectAll(".group-tick")
       .data(function(d) { return groupTicks(d, 10); })
@@ -251,6 +371,9 @@ function renderChart (matrix) {
       .data(function(chords) { return chords; })
     .enter().append("path")
       .attr("d", ribbon)
+      .attr("data-index", function (d){
+        return d.source.index;
+      })
       .style("fill", function(d) { return color(d.target.index); })
       .style("stroke", function(d) { return d3.rgb(color(d.target.index)).darker(); });
 
