@@ -1,7 +1,6 @@
 <?php
   header("Access-Control-Allow-Origin: *");
 
-
   $host = 'localhost';
   $user = 'root';
   $pass = 'testing';
