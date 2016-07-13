@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>ellipse</title>
+<style>
+
+body {
+  font: 12px sans-serif;
+}
+
+
+#main {
+  margin: 10px auto;
+  width: 1200px;
+  height: 700px;
+}
+
+
+ellipse {
+  cursor: pointer;
+  opacity: 0.5;
+  transition: all .3s ease-in-out;
+  -webkit-transition: all .3s ease-in-out;
+  -moz-transition: all .3s ease-in-out;
+  -ms-transition: all .3s ease-in-out;
+  -o-transition: all .3s ease-in-out;
+}
+
+ellipse:hover {
+  opacity: 1;
+}
+
+line {
+  opacity: 0.2;
+  transition: all .3s ease-in-out;
+  -webkit-transition: all .3s ease-in-out;
+  -moz-transition: all .3s ease-in-out;
+  -ms-transition: all .3s ease-in-out;
+  -o-transition: all .3s ease-in-out;
+}
+
+line.active{
+  opacity: 1;
+}
+
+.symbol {
+  fill: #222;
+  font-size: 18px;
+}
+
+
+</style>
+<div id="main">
+  <svg width="960" height="700"></svg>
+</div>
+<script src="d3.v4.0.0-alpha.50.min.js"></script>
+<script>
+  (function (d3) { 
+
+
+    var data = {
+      nodes : [
+        //[id, x, y, rx, ry, name]
+        [0,  90, 390, 88, 65, '中国'],
+        [1,  330, 390, 78, 56, '日本'],
+        [2,  630, 390, 73, 45, '新加坡'],
+        [3,  910, 390, 65, 35, '韩国'],
+        [4,  300, 220, 45, 35, '越南'],
+        [5,  160, 580, 45, 35, '印尼'],
+        [6,  165, 80, 45, 35, '文莱'],
+        [7,  390, 600, 45, 35, '泰国'],
+        [8,  890, 70, 45, 35, '缅甸'],
+        [9,  590, 650, 45, 35, '马来西亚'],
+        [10, 560, 260, 29, 20, '老挝'],
+        [11, 800, 580, 34, 28, '柬埔寨'],
+        [12, 990, 300, 40, 35, '菲律宾']
+      ],
+      links : [
+        //{source:'0', target:1, value: 1.2}
+      ]
+    };
+
+    var colorRange = [
+      "#aaccee", 
+      "#aaaaaa", 
+      "#aadddd", 
+      "#aaccbb", 
+      "#aaffee", 
+      "#cc99ae", 
+      "#ececea", 
+      "#aacc11",
+      "#ddeeee", 
+      "#adadff", 
+      "#ccaaaa", 
+      "#ccee99", 
+      "#ddeeff", 
+      "#eeeeee"
+    ];
+
+    function initLinks () {
+      var n = data.nodes;
+      var l = data.links;
+
+      for (var i = 0, l1 = n.length; i < l1; i++) {
+        for (var j = i+1; j < l1; j++) {
+          l.push({
+            source : n[i][0],
+            target : n[j][0],
+            value : null
+          });
+        }
+      }
+    };
+
+    initLinks();
+
+    function fetchData (opt) {
+      d3.json(opt.json, function (err, data) {
+        if(err) throw err;
+        opt.callback && opt.callback(data);
+      });
+    };
+
+    // call the main entry
+    fetchData({
+      json : 'json/force.json',
+      callback : function (data) {
+        var json = processJson(data);
+        renderChart(json);
+      }
+    });
+
+    function processJson (rawData) {
+      var n = data.nodes;
+      var l = data.links;
+
+      for (var city in rawData) {
+        var obj = rawData[city];
+        for (var subCity in obj) {
+          for (var i = 0, link; link = l[i++];) {
+
+            var source = n[link['source']];
+            var target = n[link['target']];
+
+            if (source[source.length-1] == city && target[target.length-1] == subCity) {
+              link.value = obj[subCity];
+              break;
+            }
+          }
+        }
+      }
+
+      console.log('l', l);
+      return data;
+    }
+
+    function renderChart (json) {
+      var width = 1200,
+          height = 700;
+      
+      var color = d3.scaleOrdinal()
+                  .domain(d3.range(14))
+                  .range(colorRange);
+
+      var svg = d3.select('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+
+        var link = svg.append('g')
+                   .attr('class', 'links');
+
+        var links = link.selectAll('line')
+                    .data(data.links)
+                    .enter()
+                    .append('line')
+                    .style('stroke', function (d) {
+                      return color(d.source);
+                    })
+                    .style('stroke-width', function (d){
+                      return d.value / 10;
+                    })
+                    .attr('data-index', function (d) {
+                      return d.source;
+                    })
+                    .attr('x1', function (d, i) {
+                      return data.nodes[d.source][1];
+                    })
+                    .attr('y1', function (d, i) {
+                      return data.nodes[d.source][2];
+                    })
+                    .attr('x2', function (d, i) {
+                      return data.nodes[d.target][1];
+                    })
+                    .attr('y2', function (d, i) {
+                      return data.nodes[d.target][2];
+                    });
+
+
+        var ellipse = svg.selectAll('ellipse')
+                    .data(data.nodes)
+                    .enter()
+                    .append('ellipse')
+                    .attr('data-index', function (d){
+                      return d[0];
+                    })
+                    .attr('cx', function (d, i){
+                      return d[1];
+                    })
+                    .attr('cy', function (d, i){
+                      return d[2];
+                    })
+                    .attr('rx', function (d, i){
+                      return d[3];
+                    })
+                    .attr('ry', function (d, i){
+                      return d[4];
+                    })
+                    .style('fill', function (d) {
+                      return color(d[0]);
+                    }).on('mouseover', function (d) {
+                      var $this = d3.select(this);
+                      var thisIndex = $this.attr('data-index');
+                      var ls = d3.selectAll('line').filter(function (d){
+                        return d.source == thisIndex || d.target == thisIndex;
+                      });
+                      ls.attr('class', 'active')
+                    }).on('mouseout', function (d) {
+                      var $this = d3.select(this);
+                      var thisIndex = $this.attr('data-index');
+                      var ls = d3.selectAll('line').filter(function (d){
+                        return d.source == thisIndex || d.target == thisIndex;
+                      });
+
+                      ls.attr('class', '')
+                    });
+
+
+        var symbol = svg.append('g');
+        var symbols = symbol.selectAll('text')
+                     .data(data.nodes)
+                     .enter()
+                     .append('text')
+                     .attr('x', function (d){
+                      return d[1] -(d[5].length*8);
+                     })
+                     .attr('y', function (d){
+                      return d[2];
+                     })
+                     .attr('dy', '.35em')
+                     .attr('class', 'symbol')
+                     .text(function (d){
+                      return d[5];
+                     });
+    };
+  })(d3);
+
+
+</script>
