@@ -29,7 +29,7 @@ ellipse:hover {
   opacity: 1;
 }
 
-line {
+.line {
   opacity: 0.2;
   transition: all .3s ease-in-out;
   -webkit-transition: all .3s ease-in-out;
@@ -38,7 +38,7 @@ line {
   -o-transition: all .3s ease-in-out;
 }
 
-line.active{
+.line.active{
   opacity: 1;
 }
 
@@ -60,18 +60,18 @@ line.active{
     var data = {
       nodes : [
         //[id, x, y, rx, ry, name]
-        [0,  90, 390, 88, 65, '中国'],
-        [1,  330, 390, 78, 56, '日本'],
-        [2,  630, 390, 73, 45, '新加坡'],
-        [3,  910, 390, 65, 35, '韩国'],
-        [4,  300, 220, 45, 35, '越南'],
-        [5,  160, 580, 45, 35, '印尼'],
-        [6,  165, 80, 45, 35, '文莱'],
-        [7,  390, 600, 45, 35, '泰国'],
-        [8,  890, 70, 45, 35, '缅甸'],
-        [9,  590, 650, 45, 35, '马来西亚'],
-        [10, 560, 260, 29, 20, '老挝'],
-        [11, 800, 580, 34, 28, '柬埔寨'],
+        [0,  440, 150, 88, 65, '中国'],
+        [1,  720, 190, 78, 56, '日本'],
+        [2,  610, 520, 73, 45, '新加坡'],
+        [3,  680, 90, 65, 35, '韩国'],
+        [4,  390, 280, 30, 55, '越南'],
+        [5,  230, 580, 45, 35, '印尼'],
+        [6,  515, 380, 45, 35, '文莱'],
+        [7,  190, 290, 45, 35, '泰国'],
+        [8,  90, 270, 45, 35, '缅甸'],
+        [9,  535, 450, 45, 35, '马来西亚'],
+        [10, 290, 320, 30, 39, '老挝'],
+        [11, 350, 380, 54, 28, '柬埔寨'],
         [12, 990, 300, 40, 35, '菲律宾']
       ],
       links : [
@@ -148,9 +148,21 @@ line.active{
           }
         }
       }
-
-      console.log('l', l);
       return data;
+    }
+
+    function buildPathDots (src, dist) {
+      var dots = [];
+      dots.push([src[1], src[2]]);
+      
+      var deltaX = dist[1] - src[1];
+      var deltaY = dist[2] - src[2];
+
+      dots.push([src[1] + Math.round(0.2*deltaX), src[2] + Math.round(0.7*deltaY)]);
+
+      dots.push([dist[1], dist[2]]);
+
+      return dots;
     }
 
     function renderChart (json) {
@@ -169,10 +181,18 @@ line.active{
         var link = svg.append('g')
                    .attr('class', 'links');
 
-        var links = link.selectAll('line')
+        var linePath = d3.line().curve(d3.curveCatmullRom.alpha(0.5))
+
+        var links = link.selectAll('path')
                     .data(data.links)
                     .enter()
-                    .append('line')
+                    .append('path')
+                    .attr('class', 'line')
+                    .attr('d', function (d){
+                      var pathDots = buildPathDots(data.nodes[d.source], data.nodes[d.target]);
+                      return linePath(pathDots);
+                    })
+                    .attr('fill', 'rgba(255,255,255,0)')
                     .style('stroke', function (d) {
                       return color(d.source);
                     })
@@ -181,18 +201,6 @@ line.active{
                     })
                     .attr('data-index', function (d) {
                       return d.source;
-                    })
-                    .attr('x1', function (d, i) {
-                      return data.nodes[d.source][1];
-                    })
-                    .attr('y1', function (d, i) {
-                      return data.nodes[d.source][2];
-                    })
-                    .attr('x2', function (d, i) {
-                      return data.nodes[d.target][1];
-                    })
-                    .attr('y2', function (d, i) {
-                      return data.nodes[d.target][2];
                     });
 
 
@@ -220,18 +228,18 @@ line.active{
                     }).on('mouseover', function (d) {
                       var $this = d3.select(this);
                       var thisIndex = $this.attr('data-index');
-                      var ls = d3.selectAll('line').filter(function (d){
+                      var ls = d3.selectAll('path').filter(function (d){
                         return d.source == thisIndex || d.target == thisIndex;
                       });
-                      ls.attr('class', 'active')
+                      ls.attr('class', 'line active')
                     }).on('mouseout', function (d) {
                       var $this = d3.select(this);
                       var thisIndex = $this.attr('data-index');
-                      var ls = d3.selectAll('line').filter(function (d){
+                      var ls = d3.selectAll('path').filter(function (d){
                         return d.source == thisIndex || d.target == thisIndex;
                       });
 
-                      ls.attr('class', '')
+                      ls.attr('class', 'line')
                     });
 
 
