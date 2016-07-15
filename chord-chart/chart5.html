@@ -10,27 +10,17 @@ body {
 
 #main {
   margin: 10px auto;
-  width: 1200px;
+  width: 840px;
   height: 700px;
 }
 
 
 ellipse {
   cursor: pointer;
-  opacity: 0.5;
-  transition: all .3s ease-in-out;
-  -webkit-transition: all .3s ease-in-out;
-  -moz-transition: all .3s ease-in-out;
-  -ms-transition: all .3s ease-in-out;
-  -o-transition: all .3s ease-in-out;
-}
-
-ellipse:hover {
-  opacity: 1;
 }
 
 .line {
-  opacity: 0.2;
+  opacity: 0.1;
   transition: all .3s ease-in-out;
   -webkit-transition: all .3s ease-in-out;
   -moz-transition: all .3s ease-in-out;
@@ -39,7 +29,7 @@ ellipse:hover {
 }
 
 .line.active{
-  opacity: 1;
+  opacity: 0.7;
 }
 
 .symbol {
@@ -50,7 +40,7 @@ ellipse:hover {
 
 </style>
 <div id="main">
-  <svg width="960" height="700"></svg>
+  <svg width="760" height="700"></svg>
 </div>
 <script src="d3.v4.0.0-alpha.50.min.js"></script>
 <script>
@@ -60,19 +50,19 @@ ellipse:hover {
     var data = {
       nodes : [
         //[id, x, y, rx, ry, name]
-        [0,  440, 150, 88, 65, '中国'],
-        [1,  720, 190, 78, 56, '日本'],
-        [2,  610, 520, 73, 45, '新加坡'],
-        [3,  680, 90, 65, 35, '韩国'],
-        [4,  390, 280, 30, 55, '越南'],
-        [5,  230, 580, 45, 35, '印尼'],
-        [6,  515, 380, 45, 35, '文莱'],
-        [7,  190, 290, 45, 35, '泰国'],
-        [8,  90, 270, 45, 35, '缅甸'],
-        [9,  535, 450, 45, 35, '马来西亚'],
-        [10, 290, 320, 30, 39, '老挝'],
-        [11, 350, 380, 54, 28, '柬埔寨'],
-        [12, 990, 300, 40, 35, '菲律宾']
+        [0,  400, 170, 188, 135, '中国'],
+        [1,  630, 240, 58, 46, '日本'],
+        [2,  460, 580, 38, 38, '新加坡'],
+        [3,  540, 130, 45, 35, '韩国'],
+        [4,  340, 450, 30, 55, '越南'],
+        [5,  600, 620, 85, 35, '印尼'],
+        [6,  670, 520, 30, 30, '文莱'],
+        [7,  150, 480, 35, 35, '泰国'],
+        [8,  170, 360, 32, 32, '缅甸'],
+        [9,  515, 460, 75, 25, '马来西亚'],
+        [10, 230, 420, 30, 30, '老挝'],
+        [11, 260, 480, 44, 28, '柬埔寨'],
+        [12, 600, 420, 40, 35, '菲律宾']
       ],
       links : [
         //{source:'0', target:1, value: 1.2}
@@ -80,20 +70,19 @@ ellipse:hover {
     };
 
     var colorRange = [
-      "#aaccee", 
-      "#aaaaaa", 
-      "#aadddd", 
-      "#aaccbb", 
-      "#aaffee", 
-      "#cc99ae", 
-      "#ececea", 
-      "#aacc11",
-      "#ddeeee", 
-      "#adadff", 
-      "#ccaaaa", 
-      "#ccee99", 
-      "#ddeeff", 
-      "#eeeeee"
+      "#2266ee",  // 中国
+      "#1199ee",  // 日本
+      "#99aaff", // 新加坡
+      "#2299dd", // 韩国
+      "#99dd99", // 越南
+      "#6666ff", // 印尼
+      "#9999dd", // 文莱
+      "#aacc11", // 泰国
+      "#aaffaa", // 缅甸
+      "#aaaaff", // 马来西亚
+      "#99eeaa", // 老挝
+      "#ccee99", // 柬埔寨
+      "#9696ee" // 菲律宾
     ];
 
     function initLinks () {
@@ -111,7 +100,31 @@ ellipse:hover {
       }
     };
 
-    initLinks();
+    function init () {
+      fetchData({
+        json : 'json/symbolSize.json',
+        callback : function (data) {
+          initSymbols(data);
+
+          initLinks();
+        }
+      });
+    };
+    init();
+
+    function initSymbols (json) {
+      console.log(json);
+      var n = data.nodes;
+      for (var attr in json) {
+        var current = json[attr];
+        for (var i = 0, node; node = n[i++];) {
+          if (current['Country'] == node[5]) {
+            node[3] = node[4] = current['SymbolSize'];
+            break;
+          }
+        }
+      }
+    };
 
     function fetchData (opt) {
       d3.json(opt.json, function (err, data) {
@@ -158,7 +171,7 @@ ellipse:hover {
       var deltaX = dist[1] - src[1];
       var deltaY = dist[2] - src[2];
 
-      dots.push([src[1] + Math.round(0.2*deltaX), src[2] + Math.round(0.7*deltaY)]);
+      dots.push([src[1] + Math.round(0.7*deltaX), src[2] + Math.round(0.2*deltaY)]);
 
       dots.push([dist[1], dist[2]]);
 
@@ -166,7 +179,7 @@ ellipse:hover {
     }
 
     function renderChart (json) {
-      var width = 1200,
+      var width = 840,
           height = 700;
       
       var color = d3.scaleOrdinal()

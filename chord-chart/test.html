@@ -94,7 +94,9 @@ svg {
         .attr("cy", function(d) {
             return d.y;
         })
-        .attr("r", radius)
+        .attr("r", function () {
+          return radius + Math.round(Math.random() * radius);
+        })
         .style("fill", function(d, i) {
             return color(i);
         });
