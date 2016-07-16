@@ -4,9 +4,8 @@
 
 path {
   pointer-events: all;
-  fill: none;
-  stroke: #666;
-  stroke-opacity: 0.2;
+  stroke: #222;
+  stroke-width: 5px;
 }
 
 .active circle {
@@ -37,14 +36,20 @@ svg {
         height = +svg.attr("height"),
         radius = 32;
 
-    var circles = d3.range(40).map(function() {
+    var test = [
+        {x:150,y:150},
+        {x:320,y:320},
+        {x:300,y:200},
+        {x:600,y:600}
+    ];
+
+    var circles = d3.range(8).map(function(d, index) {
         return {
             x: Math.round(Math.random() * (width - radius * 2) + radius),
             y: Math.round(Math.random() * (height - radius * 2) + radius)
-        };
+          };
     });
 
-    console.log(circles);
     var color = d3.scaleOrdinal()
         .range(d3.schemeCategory20);
 
@@ -55,51 +60,48 @@ svg {
         .y(function(d) {
             return d.y;
         })
-        .extent([
-            [-1, -1],
-            [width + 1, height + 1]
-        ]);
+        .extent([[-1, -1], [width + 1, height + 1]]);
 
     var circle = svg.selectAll("g")
         .data(circles)
-        .enter().append("g")
-        .call(d3.drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended));
+        .enter().append("g");
 
     var cell = circle.append("path")
         .data(voronoi.polygons(circles))
         .attr("d", renderCell)
+        .attr("fill", function (d, i){
+            return color(i);
+        })
         .attr("id", function(d, i) {
             return "cell-" + i;
         });
 
-    circle.append("clipPath")
-        .attr("id", function(d, i) {
-            return "clip-" + i;
-        })
-        .append("use")
-        .attr("xlink:href", function(d, i) {
-            return "#cell-" + i;
-        });
 
-    circle.append("circle")
-        .attr("clip-path", function(d, i) {
-            return "url(#clip-" + i + ")";
-        })
-        .attr("cx", function(d) {
-            return d.x;
-        })
-        .attr("cy", function(d) {
-            return d.y;
-        })
-        .attr("r", function () {
-          return radius + Math.round(Math.random() * radius);
-        })
-        .style("fill", function(d, i) {
-            return color(i);
-        });
+    // circle.append("clipPath")
+    //     .attr("id", function(d, i) {
+    //         return "clip-" + i;
+    //     })
+    //     .append("use")
+    //     .attr("xlink:href", function(d, i) {
+    //         return "#cell-" + i;
+    //     });
+
+    // circle.append("circle")
+    //     .attr("clip-path", function(d, i) {
+    //         return "url(#clip-" + i + ")";
+    //     })
+    //     .attr("cx", function(d) {
+    //         return d.x;
+    //     })
+    //     .attr("cy", function(d) {
+    //         return d.y;
+    //     })
+    //     .attr("r", function () {
+    //       return radius + Math.round(Math.random() * radius);
+    //     })
+    //     .style("fill", function(d, i) {
+    //         return color(i);
+    //     });
 
     function dragstarted(d) {
         d3.select(this).raise().classed("active", true);
