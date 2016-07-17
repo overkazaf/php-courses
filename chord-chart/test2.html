@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+.cell-border {
+    fill: none;
+    stroke: #fff;
+}
+
+.cell-center {
+    fill: none;
+    stroke: orange;
+}
+
+.label {
+    font: 20px sans-serif;
+    color: #fff;
+}
+
+.label--top {
+    text-anchor: middle;
+}
+
+.label--right {
+    text-anchor: start;
+}
+
+.label--bottom {
+    text-anchor: middle;
+}
+
+.label--left {
+    text-anchor: end;
+}
+
+svg {
+    //border-radius: 50%;
+
+    border: 4px solid #ddd;
+    cursor: pointer;
+}
+
+.txtRect, 
+.cell g {
+    opacity: 0.2;
+    transition: all .3s ease-in-out;
+    -webkit-transition: all .3s ease-in-out;
+    -moz-transition: all .3s ease-in-out;
+    -ms-transition: all .3s ease-in-out;
+    -o-transition: all .3s ease-in-out;
+}
+
+.txtRect:hover, 
+.cell g:hover {
+    opacity: 1;
+}
+
+path {
+    opacity: 1;
+    transition: all .3s ease-in-out;
+    -webkit-transition: all .3s ease-in-out;
+    -moz-transition: all .3s ease-in-out;
+    -ms-transition: all .3s ease-in-out;
+    -o-transition: all .3s ease-in-out;
+}
+
+#main {
+    margin: 10px auto;
+    width: 600px;
+    height: 600px;
+    text-align: center;
+}
+
+#aside {
+  position: absolute;
+  left: 120px;
+  top: 120px;
+  border: 0;
+  stroke-width: 2;
+  border-radius: 0;
+}
+</style>
+
+<body>
+    <div id="main">
+        <h2 id="title"></h2>
+        <svg id="mainSVG" width="600" height="600"></svg>
+    </div>
+    <script src="//d3js.org/d3.v3.min.js"></script>
+    <script>
+    var processd = {};
+    var width = 600,
+        height = 600,
+        radius = 300,
+        AreaCount = 7,
+        AREA = Math.PI * 2 * 350,
+        INTERVAL = 5 * 1000, 
+        areas = {},
+        PERCENT = [],
+        percentComp = [0.07, 0.9, 0.11, 0.12, 0.16, 0.21, 0.24],
+        continents = [
+            'asia',
+            'europe',
+            'sAmerica',
+            'oceania',
+            'africa',
+            'other',
+            'nAmerica'
+        ],
+        MyColors = [
+            '#aa99ff',
+            '#ccddaa',
+            '#eeeeff',
+            '#99eeaa',
+            '#ffeeaa',
+            '#dddddd',
+            '#ccaaee'
+        ];
+
+
+    function initText (conts) {
+
+      var aside = document.getElementById('aside');
+      if (aside) document.body.removeChild(aside);
+
+      var rects = d3.select('body')
+        .append('svg')
+        .attr('id', 'aside')
+        .attr('class', 'aside')
+        .attr('width', 200)
+        .attr('height', 400)
+        .selectAll('rect')
+        .data(conts)
+        .enter()
+        .append('rect')
+        .attr('class', 'txtRect')
+        .attr('width', 200)
+        .attr('height', 40)
+        .attr('x', 0)
+        .attr('y', function (d, i){
+          return i * 40;
+        })
+        .style('fill', function (d, i){
+          return MyColors[i];
+        });
+
+        var texts = d3.select('.aside').selectAll('text')
+        .data(conts)
+        .enter()
+        .append('text')
+        .attr('x', function (d, i){
+          return 40;
+        })
+        .attr('y', function (d, i){
+          return 40 * (i+1) - 10;
+        })
+        .style('fill', '#222')
+        .text(function (d, i){
+          return (i + 1) + ". " +conts[i];
+        });
+    };
+
+
+
+    function readTSV(callback) {
+
+        d3.tsv('tsv/data.tsv', function(err, data) {
+            if (err) throw err;
+            data.forEach(function(d, i) {
+                var c = d['Continent'];
+
+                if (continents.indexOf(c) > -1) {
+                    if (!processd[c]) {
+                        processd[c] = [];
+                    }
+                    delete d[''];
+                    delete d['Continent'];
+                    delete d['Country'];
+
+                    // 处理百分号
+                    for (var attr in d) {
+                        var fixed = attr.replace(/(\d+)([\s\uFEFF\xa0\u3000]+|[\uFEFF\xa0\u3000\s]+)(\%)/g, function(item, match) {
+                            if (item.indexOf('%') >= 0) {
+                                return match + '%';
+                            } else {
+                                return item;
+                            }
+                        });
+                        d[fixed] = d[attr];
+                        delete d[attr];
+                        if (fixed.indexOf('%') == -1) delete d[fixed];
+                    }
+                    processd[c].push(d);
+                }
+            });
+
+            callback && callback(processd);
+        });
+    }
+
+    var percentageMap = {};
+
+    readTSV(function(d) {
+        for (var cont in d) {
+            var c = d[cont];
+            c.forEach(function(y) {
+
+                for (var yearP in y) {
+                    if (!percentageMap[yearP]) {
+                        percentageMap[yearP] = {};
+                    }
+
+                    var currentC = percentageMap[yearP];
+                    if (typeof currentC[cont] != 'object') {
+                        currentC[cont] = [];
+                        currentC[cont].push(y[yearP]);
+                    } else {
+                        currentC[cont].push(y[yearP]);
+                    }
+
+                }
+
+                var temp = currentC[cont].reduce(function(pre, current) {
+                    return parseFloat(pre) + parseFloat(current) + '%';
+                });
+
+                currentC[cont] = temp;
+            });
+        }
+
+        calcMapSum();
+
+        var keys = Object.keys(percentageMap);
+        var cnt = 0;
+        renderChart(keys[(cnt++) % keys.length]);
+
+        setInterval(function (){
+          renderChart(keys[(cnt++) % keys.length]);
+        }, INTERVAL)
+    });
+
+    function calcMapSum() {
+        for (var yearP in percentageMap) {
+            var current = percentageMap[yearP];
+            for (var key in current) {
+                var arr = current[key];
+
+                var sum = 0;
+                for (var i = 0, a; a = arr[i++];) {
+                    var t = parseFloat(a);
+                    sum += t;
+                }
+
+                current[key] = new Number(sum).toFixed(2) + '%';
+            }
+        }
+    }
+
+
+
+    function randomColor() {
+        var rand = Math.floor(Math.random() * 0xFFFFFF).toString(16);
+        if (rand.length == 6) {
+            return rand;
+        } else {
+            return randomColor();
+        }
+    }
+
+
+    var data = d3.range(continents.length)
+        .map(function() {
+            return [
+                Math.round(Math.random() * width),
+                Math.round(Math.random() * height)
+            ];
+        });
+
+    var t = [];
+
+    function buildCells() {
+
+        return d3.geom.voronoi()
+            .clipExtent([
+                [-1, -1],
+                [width + 1, height + 1]
+            ])
+            (d3.range(AreaCount)
+                .map(function() {
+                    return randLimitPoint(radius);
+                }))
+            .map(d3.geom.polygon)
+    }
+
+    function randLimitPoint(r) {
+        var x = Math.round(Math.random() * width);
+        var y = Math.round(Math.random() * width);
+
+        // 离散点要在圆形内
+        if (Math.sqrt((r - x) * (r - x) + (r - y) * (r - y)) <= r) {
+            return [x, y];
+        } else {
+            return randLimitPoint(r);
+        }
+    }
+
+
+
+    function buildAndCheckCells() {
+        var cells = buildCells();
+        var s = [];
+        cells.sort(function(a, b) {
+            return b.area() - a.area();
+        });
+        cells.map(function(d,i) {
+            if(!i) {
+              for (var fn in d) {
+                console.log(fn);
+              }
+              console.log(d.point);
+              console.log(d.centroid());
+              console.log(d.clip);
+            }
+            s.push(parseInt(d.area()));
+        });
+
+        var sum = s.reduce(function(pre, cur) {
+            return pre + cur;
+        });
+
+        PERCENT = [];
+        s.map(function(d, index) {
+            PERCENT.push(new Number((d / sum) * 100).toFixed(2));
+        });
+
+        var flag = true;
+        for (var i = 0, p; p = PERCENT[i]; i++) {
+            //console.log(Math.abs(parseFloat(p) - percentComp[i]));
+        }
+
+        if (flag) return cells;
+        else return buildAndCheckCells();
+
+    };
+
+    function renderChart(currentYearP) {
+
+        var svg = d3.select("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+
+        svg.selectAll('g')
+          .attr('opacity', 1)
+          .transition()
+          .attr('opacity', 0)
+          .remove();
+
+        var cells = buildAndCheckCells();
+
+        var cell = svg.append("g")
+            .attr("class", "cell")
+            .selectAll("g")
+            .data(cells)
+            .enter().append("g");
+
+        cell.append("path")
+            .attr("class", "cell-border")
+            .transition()
+            .attr("stroke-width", 4)
+            .style("fill", function(d, i) {
+                return MyColors[i];
+            })
+            .attr("d", function(d) {
+                return "M" + d.join("L") + "Z";
+            });
+
+        svg.append("g")
+            .attr("class", "label")
+            .selectAll("text")
+            .data(cells)
+            .enter().append("text")
+            .attr("class", function(d) {
+                var centroid = d.centroid(),
+                    point = d.point,
+                    angle = Math.round(Math.atan2(centroid[1] - point[1], centroid[0] - point[0]) / Math.PI * 2);
+                return "label--" + (d.orient = angle === 0 ? "right" : angle === -1 ? "top" : angle === 1 ? "bottom" : "left");
+            })
+            .attr("transform", function(d) {
+                return "translate(" + d.point + ")";
+            })
+            .attr("dy", function(d) {
+                return d.orient === "left" || d.orient === "right" ? ".35em" : d.orient === "bottom" ? ".71em" : null;
+            })
+            .attr("x", function(d) {
+                return d.orient === "right" ? 6 : d.orient === "left" ? -6 : null;
+            })
+            .attr("y", function(d) {
+                return d.orient === "bottom" ? 6 : d.orient === "top" ? -6 : null;
+            })
+            .text(function(d, i) {
+                return getTextBySortedIndex(i);
+            });
+
+        document.getElementById('title').innerText = 'Year:' + currentYearP.substring(0, currentYearP.length-1);
+
+        var flagEE = true;
+        function getTextBySortedIndex(i) {
+            var currentC = percentageMap[currentYearP];
+            var sortedKeys = Object.keys(currentC).sort(function(a, b) {
+                return parseFloat(currentC[b]) - parseFloat(currentC[a]);
+            });
+
+            gSortedKeys = sortedKeys;
+
+            if (flagEE) {
+
+                flagEE = false;
+            }
+            var c = sortedKeys[i];
+            //return c + '(' + currentC[c] + ')';
+            return c + '(' + PERCENT[i] + '%)';
+        };
+
+        initText(gSortedKeys);
+
+    };
+
+
+    </script>

@@ -4,7 +4,7 @@
 
 path {
   pointer-events: all;
-  stroke: #222;
+  stroke: #ddd;
   stroke-width: 5px;
 }
 
@@ -23,7 +23,7 @@ svg {
   width: 700px;
   height: 700px;
   border-radius: 50%;
-  border: 4px solid #222;
+  border: 4px solid #ddd;
 }
 </style>
 <svg width="700" height="700"></svg>
@@ -37,21 +37,30 @@ svg {
         radius = 32;
 
     var test = [
-        {x:150,y:150},
-        {x:320,y:320},
-        {x:300,y:200},
-        {x:600,y:600}
+        // {x:250,y:150},
+        // {x:320,y:50},
+        // {x:400,y:90},
+        // {x:390,y:150},
+        // {x:550,y:300},
+        // {x:175,y:450},
+        // {x:380,y:450}
+        {x: 350, y : 200},
+        {x: 174, y : 400},
+        {x: 526, y : 400}
     ];
 
-    var circles = d3.range(8).map(function(d, index) {
-        return {
-            x: Math.round(Math.random() * (width - radius * 2) + radius),
-            y: Math.round(Math.random() * (height - radius * 2) + radius)
-          };
+    var circles = d3.range(3).map(function(d, index) {
+
+        return test[index];
+        // return {
+        //     x: Math.round(Math.random() * (width - radius * 2) + radius),
+        //     y: Math.round(Math.random() * (height - radius * 2) + radius)
+        //   };
     });
 
     var color = d3.scaleOrdinal()
         .range(d3.schemeCategory20);
+
 
     var voronoi = d3.voronoi()
         .x(function(d) {
@@ -60,7 +69,12 @@ svg {
         .y(function(d) {
             return d.y;
         })
+        // .size(function (d){
+        //     return d[0];
+        // });
         .extent([[-1, -1], [width + 1, height + 1]]);
+
+
 
     var circle = svg.selectAll("g")
         .data(circles)
